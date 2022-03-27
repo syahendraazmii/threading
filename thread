@@ -1,0 +1,97 @@
+#include <iostream> 
+#include <thread>
+#include <mutex> 
+#include <condition_variable>
+#include <chrono>
+using namespace std;
+
+mutex Mutex;
+//mutex = data gabisa di akses oleh banyak thread
+//deklarasi ke void
+condition_variable Kondis;
+//deklarasi ke void
+int angka = 1;
+// deklarasi  angka dan inisialisasi variabel dengan input 1 
+
+void oodThread()
+//fungsi oddThread
+{
+    for (; angka < 25;)
+        //loop kurang dari 25
+    {
+        unique_lock<mutex> manageObj(Mutex);
+        //object yang digunakan untuk mengelola data dari mutex
+        Kondis.wait(manageObj, []() { return (angka % 2 == 1); });
+        /*
+         variabel Kondis memeriksa penuh atau tidaknya,
+        maka akan ada jeda/menunggu untuk manageObject mengelola data,
+        jika sudah maka akan mereturn hasil loopingan dari inputan variabel angka yaitu 1  mod 2 sama dengan 1
+        */
+        this_thread::sleep_for(chrono::seconds(1));
+        //delay 1detik
+        cout << "Odd Thread: " << angka << endl;
+        //output thread sesuai angka yang di looping
+        angka++;
+        //bertambah terus sesuai aturan looping
+        manageObj.unlock();
+        //pengelola data akan terbuka dan menjadi output
+        Kondis.notify_all();
+        /*
+        variabel khusus yang mengecek penuh atau tidak,
+        juga dipakai untuk melancarkan output dari manageObj yang telah ter-unlock
+        sehingga seluruh output dapat tertampilkan
+        */
+    }
+
+}
+
+void evenThread()
+//evenThread
+{
+    for (; angka < 25;)
+        //looping angka kurang dari 25
+    {
+        unique_lock <mutex> manageObj(Mutex);
+        //object yang mengelola data dari mutex
+        Kondis.wait(manageObj, []() { return (angka % 2 == 0); });
+        /*
+        ketika variabel Kondis memeriksa penuh atau tidaknya,
+        maka akan ada jeda/menunggu untuk manageObject mengelola data,
+        jika sudah maka akan mereturn hasil loopingan dari inputan variabel angka yaitu 1  mod 2 sama dengan 1
+        */
+        this_thread::sleep_for(chrono::duration<float>(2.5));
+        /*delay 25detik 
+        */
+        cout << "Even Thread: " << angka << endl;
+        //output even thread sesuai angka yang sudah di looping
+        angka++;
+        //bertambah sesuai peraturan looping
+        manageObj.unlock();
+        // pengelola data dan siap jadi output
+        Kondis.notify_all();
+        /*
+        variabel khusus yang mengecek penuh atau tidak,
+        juga dipakai untuk melancarkan output dari manageObj yang telah ter-unlock
+        sehingga seluruh output dapat tertampilkan
+        */
+    }
+}
+
+int main()
+{
+    thread t_ood(oodThread);
+    //memanggil oddThread
+    thread t_even(evenThread);
+    //memanggil oddThread
+    t_ood.join();
+    /*
+    .join() adalah method dari thread yang berfungsi
+    miskonsepsi atau error di kode, jika tida pakai ini maka akan error otomatis
+    */
+    t_even.join();
+    /*
+    .join() adalah method dari thread yang berfungsi
+    miskonsepsi atau error di kode, jika tida pakai ini maka akan error otomatis
+    */
+    return 0;
+}
